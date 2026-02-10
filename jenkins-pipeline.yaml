@@ -1,0 +1,39 @@
+pipeline:
+  agent:
+    docker:
+      image: alpine:3.19
+      args: "-v /var/run/docker.sock:/var/run/docker.sock"
+
+  stages:
+
+    - stage: Checkout
+      steps:
+        - checkout:
+            scm:
+              $class: GitSCM
+              userRemoteConfigs:
+                - url: "https://github.com/WebGoat/WebGoat.git"
+              branches:
+                - name: "*/main"
+              extensions:
+                - $class: CloneOption
+                  shallow: false   # 🔑 HISTÓRICO COMPLETO
+
+    - stage: Security Gate - Gitleaks
+      steps:
+        - sh: |
+            echo "🔐 Executando Security Gate (Gitleaks)"
+
+            docker run --rm \
+              -v "$(pwd):/repo" \
+              zricethezav/gitleaks:latest \
+              detect \
+              --source=/repo \
+              --redact \
+              --exit-code 1
+
+    - stage: Build
+      steps:
+        - sh: |
+            echo "🏗️ Build iniciado (só se gate passar)"
+            echo "Simulação de build"
