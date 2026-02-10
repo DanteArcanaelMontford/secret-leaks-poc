@@ -29,23 +29,19 @@ pipeline {
                 echo "--------------------------------"
         
                 if [ -f gitleaks-report.json ]; then
-                  cat gitleaks-report.json | jq -r '
+                  jq -r '
                     .[] |
-                    "🔴 [\(.RuleID)] \(.Description)\n    📁 Arquivo: \(.File)\n    🔗 Commit: \(.Commit)\n    ➖ Linha: \(.StartLine)-\(.EndLine)\n"
-                  '
+                    "🔴 [\\(.RuleID)] \\(.Description)
+                        📁 Arquivo: \\(.File)
+                        🔗 Commit: \\(.Commit)
+                        ➖ Linha: \\(.StartLine)-\\(.EndLine)
+                    "
+                  ' gitleaks-report.json
                 fi
                 '''
             }
         }
 
-        stage('Checkout WebGoat') {
-            steps {
-                sh '''
-                echo "📥 Clonando WebGoat (só executa se o gate passou)"
-                git clone https://github.com/WebGoat/WebGoat.git
-                '''
-            }
-        }
 
         stage('Build WebGoat') {
             steps {
