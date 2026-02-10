@@ -3,7 +3,7 @@ pipeline {
 
     stages {
 
-        stage('Checkout') {
+        stage('Checkout PoC Repo') {
             steps {
                 checkout scm
             }
@@ -12,6 +12,8 @@ pipeline {
         stage('Security Gate - Gitleaks') {
             steps {
                 sh '''
+                echo "🔍 Executando Gitleaks no histórico do repositório da PoC"
+
                 docker run --rm \
                   -v "$PWD:/repo" \
                   zricethezav/gitleaks:latest detect \
@@ -23,10 +25,21 @@ pipeline {
             }
         }
 
+        stage('Checkout WebGoat') {
+            steps {
+                sh '''
+                echo "📥 Clonando WebGoat (só executa se o gate passou)"
+                git clone https://github.com/WebGoat/WebGoat.git
+                '''
+            }
+        }
+
         stage('Build WebGoat') {
             steps {
                 sh '''
-                echo "Build do WebGoat só roda se NÃO houver leaks"
+                echo "🔨 Buildando WebGoat"
+                cd WebGoat
+                ./mvnw clean package -DskipTests
                 '''
             }
         }
@@ -34,10 +47,10 @@ pipeline {
 
     post {
         failure {
-            echo "❌ Security Gate acionado: secrets detectados"
+            echo "❌ Pipeline BLOQUEADA por Security Gate"
         }
         success {
-            echo "✅ Pipeline limpa: sem secrets"
+            echo "✅ Pipeline liberada — WebGoat buildado"
         }
     }
 }
